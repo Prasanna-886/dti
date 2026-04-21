@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="te" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AccessNav – అందరికీ దారి</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tiro+Telugu&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ===== VOICE WELCOME OVERLAY ===== -->
+  <div id="voice-overlay" class="overlay active" role="dialog" aria-modal="true" aria-label="Mode selection dialog">
+    <div class="overlay-card" id="overlay-card">
+      <div class="overlay-logo">
+        <div class="logo-pulse"></div>
+        <span class="logo-icon">🧭</span>
+      </div>
+      <h1 class="overlay-title">AccessNav కు స్వాగతం</h1>
+      <p class="overlay-subtitle" id="overlay-subtitle">మీరు ఏ సహాయం కావాలో select చేయండి లేదా మీ voice తో చెప్పండి</p>
+
+      <div class="mode-grid" id="mode-grid">
+        <button class="mode-card" data-mode="visual" onclick="selectMode('visual')" aria-label="Visually Impaired mode">
+          <span class="mode-icon">👁️</span>
+          <span class="mode-name">Visually Impaired</span>
+          <span class="mode-desc">దృష్టి సమస్య ఉన్నవారికి audio navigation</span>
+        </button>
+        <button class="mode-card" data-mode="mobility" onclick="selectMode('mobility')" aria-label="Mobility Assistance mode">
+          <span class="mode-icon">♿</span>
+          <span class="mode-name">Mobility Assistance</span>
+          <span class="mode-desc">wheelchair / obstacles లేని routes</span>
+        </button>
+        <button class="mode-card" data-mode="hearing" onclick="selectMode('hearing')" aria-label="Hearing Impaired mode">
+          <span class="mode-icon">🔇</span>
+          <span class="mode-name">Hearing Impaired</span>
+          <span class="mode-desc">visual alerts తో safe navigation</span>
+        </button>
+        <button class="mode-card" data-mode="cognitive" onclick="selectMode('cognitive')" aria-label="Cognitive Assistance mode">
+          <span class="mode-icon">🧠</span>
+          <span class="mode-name">Cognitive Assistance</span>
+          <span class="mode-desc">simple, clear step-by-step guidance</span>
+        </button>
+      </div>
+
+      <div class="overlay-footer">
+        <button class="voice-listen-btn" id="voice-listen-btn" onclick="startVoiceSelection()">
+          <span class="mic-icon">🎙️</span>
+          <span>Voice తో చెప్పండి</span>
+        </button>
+        <p class="overlay-hint">లేదా పై నుండి మీ mode select చేయండి</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== AUDIO TOGGLE BANNER (shown after mode select for non-visual modes) ===== -->
+  <div id="audio-banner" class="audio-banner hidden" role="banner">
+    <span>🔊 Audio guidance కావాలా?</span>
+    <div class="audio-toggle-group">
+      <button class="audio-btn on" onclick="setAudio(true)" id="audio-on-btn">ఆన్ చేయి</button>
+      <button class="audio-btn off" onclick="setAudio(false)" id="audio-off-btn">వద్దు</button>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div id="main-app" class="main-app hidden">
+
+    <!-- TOP NAV -->
+    <header class="top-nav" role="banner">
+      <div class="nav-left">
+        <span class="nav-logo">🧭 AccessNav</span>
+        <span class="mode-badge" id="active-mode-badge">Mode: --</span>
+      </div>
+      <div class="nav-right">
+        <button class="icon-btn" onclick="toggleAudioGlobal()" id="global-audio-toggle" title="Audio toggle" aria-label="Toggle audio">
+          <span id="audio-icon">🔊</span>
+        </button>
+        <button class="icon-btn" onclick="openModeSwitch()" title="Mode change" aria-label="Change mode">⚙️</button>
+      </div>
+    </header>
+
+    <!-- LOCATION STATUS BAR -->
+    <div class="location-bar" id="location-bar" role="status" aria-live="polite">
+      <span class="loc-dot"></span>
+      <span id="current-location-text">మీ location తెలుసుకుంటున్నాము...</span>
+    </div>
+
+    <!-- MAP AREA -->
+    <div class="map-section">
+      <div class="map-container" id="map-container" role="img" aria-label="Navigation map">
+        <!-- SVG Simulated Map -->
+        <svg id="nav-map" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+          <!-- Roads -->
+          <rect x="0" y="180" width="600" height="40" fill="#e8e0d5" rx="4"/>
+          <rect x="270" y="0" width="40" height="400" fill="#e8e0d5" rx="4"/>
+          <rect x="0" y="320" width="600" height="30" fill="#e8e0d5" rx="4"/>
+          <rect x="100" y="0" width="30" height="400" fill="#e8e0d5" rx="4"/>
+
+          <!-- Buildings -->
+          <rect x="20" y="40" width="60" height="120" fill="#c9b99a" rx="6" class="building"/>
+          <text x="50" y="105" text-anchor="middle" font-size="9" fill="#5a4a3a">Hospital</text>
+          <rect x="150" y="30" width="90" height="130" fill="#b8d4c8" rx="6" class="building"/>
+          <text x="195" y="95" text-anchor="middle" font-size="9" fill="#2d5a4a">Mall</text>
+          <rect x="340" y="30" width="70" height="110" fill="#d4b8c8" rx="6" class="building"/>
+          <text x="375" y="90" text-anchor="middle" font-size="9" fill="#5a2d4a">School</text>
+          <rect x="450" y="40" width="100" height="120" fill="#c8d4b8" rx="6" class="building"/>
+          <text x="500" y="105" text-anchor="middle" font-size="9" fill="#3a5a2d">Park</text>
+          <rect x="20" y="240" width="60" height="60" fill="#d4c8b8" rx="6" class="building"/>
+          <text x="50" y="275" text-anchor="middle" font-size="9" fill="#5a4a2d">Bank</text>
+          <rect x="340" y="240" width="90" height="65" fill="#b8c8d4" rx="6" class="building"/>
+          <text x="385" y="278" text-anchor="middle" font-size="9" fill="#2d4a5a">Library</text>
+          <rect x="450" y="240" width="110" height="65" fill="#d4d4b8" rx="6" class="building"/>
+          <text x="505" y="278" text-anchor="middle" font-size="9" fill="#4a4a2d">Bus Stand</text>
+
+          <!-- Obstacles (shown in mobility mode) -->
+          <g id="obstacle-group" class="hidden">
+            <circle cx="200" cy="200" r="8" fill="#ff4444" opacity="0.8" class="obstacle-dot"/>
+            <text x="200" y="220" text-anchor="middle" font-size="8" fill="#ff4444">⚠️ Ramp</text>
+            <circle cx="420" cy="200" r="8" fill="#ff4444" opacity="0.8" class="obstacle-dot"/>
+            <text x="420" y="220" text-anchor="middle" font-size="8" fill="#ff4444">⚠️ Step</text>
+          </g>
+
+          <!-- Route Path -->
+          <path id="route-path" d="" stroke="#00c896" stroke-width="5" fill="none" stroke-dasharray="12,6" stroke-linecap="round" opacity="0"/>
+
+          <!-- User Pin -->
+          <g id="user-pin" transform="translate(290, 200)">
+            <circle r="14" fill="#4a90e2" opacity="0.3"/>
+            <circle r="8" fill="#4a90e2"/>
+            <circle r="3" fill="white"/>
+          </g>
+
+          <!-- Destination Pin (hidden initially) -->
+          <g id="dest-pin" transform="translate(0,0)" opacity="0">
+            <circle r="14" fill="#e2564a" opacity="0.3"/>
+            <circle r="8" fill="#e2564a"/>
+            <text y="4" text-anchor="middle" font-size="10" fill="white">🏁</text>
+          </g>
+        </svg>
+
+        <!-- Map Overlay labels -->
+        <div class="map-labels">
+          <div class="current-pin-label" id="current-pin-label">📍 మీరు ఇక్కడ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH / INPUT SECTION -->
+    <div class="search-section" role="search">
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <span class="search-icon">📍</span>
+          <input type="text" id="from-input" placeholder="మీ location (current)" readonly aria-label="Current location"/>
+        </div>
+      </div>
+      <div class="search-row">
+        <div class="search-input-wrap">
+          <span class="search-icon">🏁</span>
+          <input type="text" id="to-input" placeholder="మీరు ఎక్కడికి వెళ్ళాలి?" aria-label="Destination"/>
+          <button class="voice-input-btn" onclick="voiceInputDestination()" title="Voice input" aria-label="Voice input for destination">🎙️</button>
+        </div>
+      </div>
+      <div class="search-suggestions" id="search-suggestions"></div>
+      <button class="navigate-btn" onclick="startNavigation()" id="navigate-btn" aria-label="Start navigation">
+        <span>🧭 Navigation Start చేయి</span>
+      </button>
+    </div>
+
+    <!-- NAVIGATION STEPS PANEL -->
+    <div class="steps-panel hidden" id="steps-panel" role="region" aria-label="Navigation steps" aria-live="polite">
+      <div class="steps-header">
+        <h2 id="steps-title">Route Steps</h2>
+        <button class="close-steps-btn" onclick="closeSteps()">✕</button>
+      </div>
+      <div class="mode-info-bar" id="mode-info-bar"></div>
+      <div class="steps-list" id="steps-list"></div>
+      <div class="steps-footer">
+        <button class="repeat-btn" onclick="repeatCurrentStep()">🔁 మళ్ళీ చెప్పు</button>
+        <button class="next-step-btn" onclick="nextStep()">తదుపరి ➡️</button>
+      </div>
+    </div>
+
+    <!-- VISUAL ALERT (Hearing mode) -->
+    <div id="visual-alert" class="visual-alert hidden" role="alert" aria-live="assertive">
+      <span id="visual-alert-text"></span>
+    </div>
+
+    <!-- COGNITIVE SIMPLE PANEL -->
+    <div id="cognitive-panel" class="cognitive-panel hidden" role="region" aria-live="polite">
+      <div class="cog-step-box" id="cog-step-box">
+        <div class="cog-icon" id="cog-icon">🚶</div>
+        <div class="cog-text" id="cog-text">Navigation start చేయండి</div>
+      </div>
+      <div class="cog-progress" id="cog-progress"></div>
+    </div>
+
+  </div><!-- end main-app -->
+
+  <!-- MODE SWITCH MODAL -->
+  <div id="mode-switch-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Change mode">
+    <div class="overlay-card small">
+      <h2>Mode మార్చండి</h2>
+      <div class="mode-grid mini">
+        <button class="mode-card mini" data-mode="visual" onclick="switchMode('visual')">👁️ Visual</button>
+        <button class="mode-card mini" data-mode="mobility" onclick="switchMode('mobility')">♿ Mobility</button>
+        <button class="mode-card mini" data-mode="hearing" onclick="switchMode('hearing')">🔇 Hearing</button>
+        <button class="mode-card mini" data-mode="cognitive" onclick="switchMode('cognitive')">🧠 Cognitive</button>
+      </div>
+      <button class="close-modal-btn" onclick="closeModeSwitch()">మూసివేయి ✕</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="voice.js"></script>
+  <script src="modes.js"></script>
+  <script src="navigation.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
